@@ -17,16 +17,14 @@ unsigned long knuth_mmix_one_round(unsigned long in)
 
 void *mark_memarea_and_get_user_ptr(void *ptr, unsigned long size, MemKind k)
 {
-    void **adr = ptr;
-    *adr = knuth_mmix_one_round((unsigned long) ptr) & 0b000UL + (unsigned long) k;
-    unsigned long alloc_size;
-    if (k == 0) {
-        alloc_size = SMALLALLOC;
-    }
-    else {
-        alloc_size = LARGEALLOC;
-    }
-    return ptr + 16;
+    void **adr_marquage_debut = ptr;
+    *adr_marquage_debut = (void *)size;
+    unsigned long magic = (knuth_mmix_one_round((unsigned long) ptr) & 0b00UL) + (unsigned long) k;
+    *(adr_marquage_debut + 8) = (void *)magic;
+    void **adr_marquage_fin = ptr + size - 16;
+    *adr_marquage_fin = (void *)magic;
+    *(adr_marquage_debut + 8) = (void *)size;
+    return ptr + 16*8;
 }
 
 Alloc
