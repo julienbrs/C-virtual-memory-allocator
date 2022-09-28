@@ -17,8 +17,16 @@ unsigned long knuth_mmix_one_round(unsigned long in)
 
 void *mark_memarea_and_get_user_ptr(void *ptr, unsigned long size, MemKind k)
 {
-    /* ecrire votre code ici */
-    return (void *)0;
+    void **adr = ptr;
+    *adr = knuth_mmix_one_round((unsigned long) ptr) & 0b000UL + (unsigned long) k;
+    unsigned long alloc_size;
+    if (k == 0) {
+        alloc_size = SMALLALLOC;
+    }
+    else {
+        alloc_size = LARGEALLOC;
+    }
+    return ptr + 16;
 }
 
 Alloc
