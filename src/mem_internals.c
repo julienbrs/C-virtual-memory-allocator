@@ -19,37 +19,48 @@ unsigned long knuth_mmix_one_round(unsigned long in)
 
 void *mark_memarea_and_get_user_ptr(void *ptr, unsigned long size, MemKind k)
 {
-    // on ecrit la taille totale du bloc alloué à l'adresse ptr
+    /* on ecrit la taille totale du bloc alloué à l'adresse ptr */
     *(unsigned long *)ptr = size;
 
-    // on ecrit la valeur magique à l'adresse ptr + 8 octets
-    unsigned long magic = knuth_mmix_one_round((unsigned long) ptr) & 0b00UL | (unsigned long) k;
+    /* on ecrit la valeur magique à l'adresse ptr + 8 octets */
+    unsigned long magic = (knuth_mmix_one_round((unsigned long) ptr) & 0b00UL) | (unsigned long) k;
     *(unsigned long *)(ptr + 8) = magic;
 
-    // on ecrit la taille totale du bloc alloué à l'adresse ptr + size - 16 octets
-    *(unsigned long *)(ptr + size - 16) = size;
+    /* on ecrit la taille totale du bloc alloué à l'adresse ptr + size - 16 octets */
+    *(unsigned long *)(ptr + size - 8) = size;
 
-    // on ecrit la valeur magique à l'adresse ptr + size - 8 octets
-    *(unsigned long *)(ptr + size - 8) = magic;
+    /* on ecrit la valeur magique à l'adresse ptr + size - 8 octets */
+    *(unsigned long *)(ptr + size - 16) = magic;
 
-    // on retourne l'adresse de début du bloc utilisable ie l'adresse ptr + 16 octets
+    /* on retourne l'adresse de début du bloc utilisable ie l'adresse ptr + 16 octets */
     return ptr + 16*OCTET;
 }
 
 Alloc
 mark_check_and_get_alloc(void *ptr)
 {
-    /* On récupère les différentes valeurs */
-    void **adr_marquage_debut = ptr - 16*8;
-    unsigned long size = (unsigned long) *adr_marquage_debut;
-    MemKind k = (MemKind) *(adr_marquage_debut + 8*8) & 0b11UL;
-    /* On vérifie que magic est cohérent */
-    unsigned long magic_theoric = (knuth_mmix_one_round((unsigned long) ptr) & 0b00UL) | (unsigned long) k;
-    assert (magic_theoric == (unsigned long) *(adr_marquage_debut + 8));
-    /* On vérifie que les marquages sont cohérents */
-    assert (*(adr_marquage_debut + 16) == *(adr_marquage_debut + size - 16));
+    /* on récupère l'adresse du début du bloc alloué */
+    void *start_ptr = ptr - 16*OCTET;
 
-    Alloc a = {adr_marquage_debut, size, k};
+    /* on récupère la taille totale du bloc alloué */
+    unsigned long size = *(unsigned long *)start_ptr;
+
+    /* on récupère la valeur magique */
+    unsigned long magic = *(unsigned long *)(start_ptr + 8);
+
+    /* on récupère le type d'allocation mémoire */
+    int k =  (MemKind) (*(unsigned long *)(start_ptr + 8) & 0b11UL);
+
+    /* On vérifie que magic est cohérent */
+    unsigned long magic_theoric = (knuth_mmix_one_round((unsigned long) start_ptr) & 0b00UL) | (unsigned long) k;
+    assert(magic == magic_theoric);
+
+    /* On vérifie que la taille est identique au début et à la fin du bloc */
+    assert(size == *(unsigned long *)(start_ptr + size - 8));
+
+    /* on remplit les champs de l'alloc qu'on renvoie */
+    Alloc a = {start_ptr, size, k};
+
     return a;
 }
 

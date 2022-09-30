@@ -11,7 +11,7 @@
 void *
 emalloc_small(unsigned long size)
 {
-    /* ecrire votre code ici */
+    
     return (void *)0;
 }
 
