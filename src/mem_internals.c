@@ -10,6 +10,8 @@
 #include "mem.h"
 #include "mem_internals.h"
 
+#define OCTET 8
+
 unsigned long knuth_mmix_one_round(unsigned long in)
 {
     return in * 6364136223846793005UL % 1442695040888963407UL;
@@ -17,28 +19,44 @@ unsigned long knuth_mmix_one_round(unsigned long in)
 
 void *mark_memarea_and_get_user_ptr(void *ptr, unsigned long size, MemKind k)
 {
-    void **adr_marquage_debut = ptr;
-    *adr_marquage_debut = (void *)size;
-    unsigned long magic = (knuth_mmix_one_round((unsigned long) ptr) & 0b00UL) + (unsigned long) k;
-    *(adr_marquage_debut + 8) = (void *)magic;
-    void **adr_marquage_fin = ptr + size - 16;
-    *adr_marquage_fin = (void *)magic;
-    *(adr_marquage_debut + 8) = (void *)size;
-    return ptr + 16*8;
+    // on ecrit la taille totale du bloc alloué à l'adresse ptr
+    *(unsigned long *)ptr = size;
+
+    // on ecrit la valeur magique à l'adresse ptr + 8 octets
+    unsigned long magic = knuth_mmix_one_round((unsigned long) ptr) & 0b00UL | (unsigned long) k;
+    *(unsigned long *)(ptr + 8) = magic;
+
+    // on ecrit la taille totale du bloc alloué à l'adresse ptr + size - 16 octets
+    *(unsigned long *)(ptr + size - 16) = size;
+
+    // on ecrit la valeur magique à l'adresse ptr + size - 8 octets
+    *(unsigned long *)(ptr + size - 8) = magic;
+
+    // on retourne l'adresse de début du bloc utilisable ie l'adresse ptr + 16 octets
+    return ptr + 16*OCTET;
 }
 
 Alloc
 mark_check_and_get_alloc(void *ptr)
 {
-    /* ecrire votre code ici */
-    Alloc a = {};
+    /* On récupère les différentes valeurs */
+    void **adr_marquage_debut = ptr - 16*8;
+    unsigned long size = (unsigned long) *adr_marquage_debut;
+    MemKind k = (MemKind) *(adr_marquage_debut + 8*8) & 0b11UL;
+    /* On vérifie que magic est cohérent */
+    unsigned long magic_theoric = (knuth_mmix_one_round((unsigned long) ptr) & 0b00UL) | (unsigned long) k;
+    assert (magic_theoric == (unsigned long) *(adr_marquage_debut + 8));
+    /* On vérifie que les marquages sont cohérents */
+    assert (*(adr_marquage_debut + 16) == *(adr_marquage_debut + size - 16));
+
+    Alloc a = {adr_marquage_debut, size, k};
     return a;
 }
 
 
 unsigned long
 mem_realloc_small() {
-    assert(arena.chunkpool == 0);
+    assert(arena.chunkpool == 0);         
     unsigned long size = (FIRST_ALLOC_SMALL << arena.small_next_exponant);
     arena.chunkpool = mmap(0,
 			   size,
