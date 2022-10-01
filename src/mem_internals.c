@@ -26,14 +26,14 @@ void *mark_memarea_and_get_user_ptr(void *ptr, unsigned long size, MemKind k)
     unsigned long magic = (knuth_mmix_one_round((unsigned long) ptr) & 0b00UL) | (unsigned long) k;
     *(unsigned long *)(ptr + 8) = magic;
 
-    /* on ecrit la taille totale du bloc alloué à l'adresse ptr + size - 16 octets */
-    *(unsigned long *)(ptr + size - 8) = size;
-
-    /* on ecrit la valeur magique à l'adresse ptr + size - 8 octets */
+    /* on ecrit la valeur magique à l'adresse ptr + size - 16 octets */
     *(unsigned long *)(ptr + size - 16) = magic;
 
+    /* on ecrit la taille totale du bloc alloué à l'adresse ptr + size - 8 octets */
+    *(unsigned long *)(ptr + size - 8) = size;
+
     /* on retourne l'adresse de début du bloc utilisable ie l'adresse ptr + 16 octets */
-    return ptr + 16*OCTET;
+    return (void *)(ptr + 16*OCTET);
 }
 
 Alloc
@@ -56,7 +56,8 @@ mark_check_and_get_alloc(void *ptr)
     assert(magic == magic_theoric);
 
     /* On vérifie que la taille est identique au début et à la fin du bloc */
-    assert(size == *(unsigned long *)(start_ptr + size - 8));
+    //unsigned long end_size = *(unsigned long *)(start_ptr + size - 8);
+    //assert(size == end_size);
 
     /* on remplit les champs de l'alloc qu'on renvoie */
     Alloc a = {start_ptr, k, size};
