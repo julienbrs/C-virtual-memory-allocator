@@ -34,6 +34,8 @@ extern "C" {
 typedef enum _MemKind { SMALL_KIND, MEDIUM_KIND, LARGE_KIND } MemKind;
 
 #define TZL_SIZE 48
+
+#define OCTET 8
     
 typedef struct _MemArena {
     void *chunkpool;
