@@ -59,7 +59,7 @@ mark_check_and_get_alloc(void *ptr)
     assert(size == *(unsigned long *)(start_ptr + size - 8));
 
     /* on remplit les champs de l'alloc qu'on renvoie */
-    Alloc a = {start_ptr, size, k};
+    Alloc a = {start_ptr, k, size};
 
     return a;
 }
