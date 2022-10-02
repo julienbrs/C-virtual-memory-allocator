@@ -83,16 +83,20 @@ TEST(Generic, loopevenoddsmall) {
 
   for(auto &t: tab)
     {
+      printf("\navant alloc\n");
       t = emalloc(64);
       ASSERT_NE( t, (void *)0 );
       memset(t, 1, 64);
     }
+    printf("\nfin alloc\n");
   for(int i=0; i < nb; i+=2)
     {
+      printf("\nfree pairs\n");
       efree( tab[i] );
     }
   for(int i=1; i < nb; i+=2)
     {
+      printf("\nfree impairs\n");
       efree( tab[i] );
     }
 }
