@@ -48,7 +48,7 @@ emalloc_small(unsigned long size)
 
 void efree_small(Alloc a) {
     
-    /* à l'intérieur de la zone à libérer, on écrit l'adresse du prochain bloc libre
+    /* à l'intérieur de la zone à libérer, on écrit l'adresse du prochain bloc libre */
     /* qui est la tête actuelle du chunkpool */
     unsigned long *addr_to_free = a.ptr;
     *addr_to_free = (unsigned long) arena.chunkpool;
