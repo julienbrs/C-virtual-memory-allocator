@@ -46,7 +46,7 @@ emalloc_medium(unsigned long size)
             }
         }
         int decal = next_index - index_tzl;
-        for (int i = 0; i < decal; i++) {
+        for (int i = 0; i <= decal; i++) {
             unsigned long addr_buddy = ((unsigned long) arena.TZL[next_index]) ^ (1 << (next_index - i - 1));
             unsigned long *ptr_buddy = (unsigned long *) addr_buddy;
             *ptr_buddy = 0;
@@ -61,20 +61,20 @@ emalloc_medium(unsigned long size)
 
 
 void efree_medium(Alloc a) {
-    printf("enter free\n");
     int index_tzl = puiss2(a.size);
-    printf("index tzl : %d\n", index_tzl);
-    unsigned long addr_buddy = ((unsigned long) arena.TZL[index_tzl]) ^ (1 << index_tzl);
-    printf("addr buddy : %lu\n", addr_buddy);
+    unsigned long addr_buddy = (unsigned long) a.ptr ^ a.size;
     void *ptr_buddy = (void *) addr_buddy;
-    printf("ptr buddyszhisizhsz : %p\n", ptr_buddy);
     void *ptr_list_elt = arena.TZL[index_tzl];
-    printf("ptr list elt : %p\n", ptr_list_elt);
+    void * temp;
     while (ptr_list_elt != NULL) {
-        if (ptr_list_elt == ptr_buddy) {
-            arena.TZL[index_tzl] = ((unsigned long) a.ptr < (unsigned long) ptr_buddy) ? (void *)*(unsigned long *) a.ptr : (void *)*(unsigned long *) ptr_buddy;
-            *(unsigned long *)a.ptr = (unsigned long) arena.TZL[index_tzl + 1];
-            arena.TZL[index_tzl + 1] = a.ptr;
+        if ((void*)*(unsigned long *)ptr_list_elt == ptr_buddy) {
+            //suppression de buddy
+            *(unsigned long *)ptr_list_elt = *(unsigned long *)ptr_buddy;
+            //calcul de l'adresse a fusionner
+            temp = ((unsigned long) a.ptr < (unsigned long) ptr_buddy) ?  a.ptr : ptr_buddy;
+            //on fusionne
+            *(unsigned long *)temp = (unsigned long) arena.TZL[index_tzl + 1];
+            arena.TZL[index_tzl + 1] = temp;
             return;
         }
         else {
