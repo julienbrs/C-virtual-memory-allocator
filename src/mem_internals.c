@@ -23,7 +23,7 @@ void *mark_memarea_and_get_user_ptr(void *ptr, unsigned long size, MemKind k)
     *(unsigned long *)ptr = size;
 
     /* on ecrit la valeur magique à l'adresse ptr + 8 octets */
-    unsigned long magic = (knuth_mmix_one_round((unsigned long) ptr) & 0b00UL) | (unsigned long) k;
+    unsigned long magic = (knuth_mmix_one_round((unsigned long) ptr) & ~0b11UL) | (unsigned long) k;
     *(unsigned long *)(ptr + 8) = magic;
 
     /* on ecrit la valeur magique à l'adresse ptr + size - 16 octets */
@@ -33,14 +33,14 @@ void *mark_memarea_and_get_user_ptr(void *ptr, unsigned long size, MemKind k)
     *(unsigned long *)(ptr + size - 8) = size;
 
     /* on retourne l'adresse de début du bloc utilisable ie l'adresse ptr + 16 octets */
-    return (void *)(ptr + 16*OCTET);
+    return (void *)(ptr + 16);
 }
 
 Alloc
 mark_check_and_get_alloc(void *ptr)
 {
     /* on récupère l'adresse du début du bloc alloué */
-    void *start_ptr = ptr - 16*OCTET;
+    void *start_ptr = ptr - 16;
 
     /* on récupère la taille totale du bloc alloué */
     unsigned long size = *(unsigned long *)start_ptr;
@@ -52,7 +52,7 @@ mark_check_and_get_alloc(void *ptr)
     int k =  (MemKind) (*(unsigned long *)(start_ptr + 8) & 0b11UL);
 
     /* On vérifie que magic est cohérent */
-    unsigned long magic_theoric = (knuth_mmix_one_round((unsigned long) start_ptr) & 0b00UL) | (unsigned long) k;
+    unsigned long magic_theoric = (knuth_mmix_one_round((unsigned long) start_ptr) & ~0b11UL) | (unsigned long) k;
     assert(magic == magic_theoric);
 
     /* On vérifie que la taille est identique au début et à la fin du bloc */
@@ -112,6 +112,5 @@ nb_TZL_entries() {
     for(int i=0; i < TZL_SIZE; i++)
 	if ( arena.TZL[i] )
 	    nb ++;
-
     return nb;
 }
