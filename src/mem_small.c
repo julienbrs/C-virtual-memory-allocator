@@ -9,7 +9,6 @@
 #include "mem_internals.h"
 
 unsigned long CHUNKPOOL_SIZE;
-// TODO: enlever les printf
 
 void *
 emalloc_small(unsigned long size)
