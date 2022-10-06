@@ -21,41 +21,46 @@ unsigned int puiss2(unsigned long size) {
     return p;
 }
 
+void *recursive_buddy(int index, unsigned long size) {
+    if (index >= FIRST_ALLOC_MEDIUM_EXPOSANT + arena.medium_next_exponant) {
+        mem_realloc_medium();
+        return recursive_buddy(index - 1, size);
+    }
+    else if (arena.TZL[index] != NULL && size == 1<<index) { // cas d'arrêt on a trouvé ce qu'on cherchait
+        unsigned long next_elt = *(unsigned long *)arena.TZL[index];
+        void *ptr = mark_memarea_and_get_user_ptr(arena.TZL[index], 1<<index, MEDIUM_KIND);
+        arena.TZL[index] = (void *)next_elt;
+        return ptr;
+    }
+    else if (arena.TZL[index] == NULL) { // on va chercher plus loin
+        return recursive_buddy(index + 1, size);
+    }
+    else { //TZL[index] n'est pas NULL : on divise le bloc et on récurre
+        /* on conserve le bloc dispo suivant dans la liste */
+        unsigned long next_elt = *(unsigned long *)arena.TZL[index];
+        /* on calcule le buddy du bloc qu'on va scinder */
+        unsigned long buddy = (unsigned long)arena.TZL[index] ^ 1 << (index - 1);
+        /* comme on a rencontré aucun bloc plus petit on sait que le suivant de buddy est NULL */
+        *(unsigned long *)buddy = 0;
+        /* le bloc coupé en deux pointe sur son buddy */
+        *(unsigned long *)arena.TZL[index] = buddy;
+        /* puis on l'insère dans la liste correspondant à sa nouvelle taille */
+        arena.TZL[index - 1] = arena.TZL[index];
+        /* on met le bloc dispo suivant du début en tête de liste */
+        arena.TZL[index] = (void *)next_elt;
+        /* on récurre ! */
+        return recursive_buddy(index - 1, size);
+    }
+}
+
 
 void *
 emalloc_medium(unsigned long size)
 {
     assert(size < LARGEALLOC);
     assert(size > SMALLALLOC);
-    void *ptr;
-    
     int index_tzl = puiss2(size + 32);
-    if (arena.TZL[index_tzl] != NULL) {
-        unsigned long next_elt = *(unsigned long *)arena.TZL[index_tzl];
-        ptr = mark_memarea_and_get_user_ptr(arena.TZL[index_tzl], 1<<index_tzl, MEDIUM_KIND);
-        arena.TZL[index_tzl] = (void *)next_elt;
-
-    }
-    else {
-        int next_index = index_tzl + 1;
-        while (arena.TZL[next_index] == NULL) {
-            next_index++;
-            if (next_index > FIRST_ALLOC_MEDIUM_EXPOSANT + arena.medium_next_exponant) {
-                mem_realloc_medium();
-                next_index = index_tzl + 1;
-            }
-        }
-        int decal = next_index - index_tzl;
-        for (int i = 0; i <= decal; i++) {
-            unsigned long addr_buddy = ((unsigned long) arena.TZL[next_index]) ^ (1 << (next_index - i - 1));
-            unsigned long *ptr_buddy = (unsigned long *) addr_buddy;
-            *ptr_buddy = 0;
-            arena.TZL[next_index - i - 1] = (void *) ptr_buddy;
-        }
-        unsigned long next_elt = *(unsigned long *)arena.TZL[next_index];
-        ptr = mark_memarea_and_get_user_ptr(arena.TZL[next_index], 1<<index_tzl, MEDIUM_KIND);
-        arena.TZL[next_index] = (void *)next_elt;
-    }
+    void *ptr = recursive_buddy(index_tzl, 1<<index_tzl);
     return ptr;
 }
 
