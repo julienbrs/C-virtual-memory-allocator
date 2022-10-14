@@ -43,13 +43,13 @@ How to use memshell
 
 Available commands :
 1) **init** : initialize or reset the allocator
-2) **alloc** <size> : allocation of a memory block
+2) **alloc** <size> : allocation of a memory block.
 	The size can be in decimal or hexadecimal (prefix 0x)
 	return : block identifier and starting address of the area
 3) **free** <identifier> : release a block
 4) **destroy** : release of the allocator
-4) **show** : display the initial size and the starting address
-5) **used** : display the list of occupied blocks
+5) **show** : display the initial size and the starting address
+6) **used** : display the list of occupied blocks
 	in the form {identifier, starting address, size}
 6) **help** : display this manual
 7) **exit** : quit the shell
@@ -67,7 +67,3 @@ Small sizes are managed with a simply chained list (*pool*) of available *chunks
 Use of the *Buddy* agorithm to manage average sizes
 
 Test sets and skeleton provided (Google Test)
-
-
-
-Translated with www.DeepL.com/Translator (free version)
