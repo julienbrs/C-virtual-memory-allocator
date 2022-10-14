@@ -1,6 +1,6 @@
-Tests unitaires
+Unit tests
 ==========
 
-Ces tests sont réalisés en utilisant la bibliothèque libgtest (Google
+These tests are performed using the libgtest library (Google
 test unit).
 

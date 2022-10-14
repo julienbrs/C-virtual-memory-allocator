@@ -19,47 +19,47 @@ unsigned long knuth_mmix_one_round(unsigned long in)
 
 void *mark_memarea_and_get_user_ptr(void *ptr, unsigned long size, MemKind k)
 {
-    /* on ecrit la taille totale du bloc alloué à l'adresse ptr */
+    /* we write the total size of the block allocated at address ptr */
     *(unsigned long *)ptr = size;
 
-    /* on ecrit la valeur magique à l'adresse ptr + 8 octets */
+    /* we write the magic value to the address ptr + 8 bytes */
     unsigned long magic = (knuth_mmix_one_round((unsigned long) ptr) & ~0b11UL) | (unsigned long) k;
     *(unsigned long *)(ptr + 8) = magic;
 
-    /* on ecrit la valeur magique à l'adresse ptr + size - 16 octets */
+    /* we write the magic value to the address ptr + size - 16 bytes */
     *(unsigned long *)(ptr + size - 16) = magic;
 
-    /* on ecrit la taille totale du bloc alloué à l'adresse ptr + size - 8 octets */
+    /* we write the total size of the block allocated to the address ptr + size - 8 bytes */
     *(unsigned long *)(ptr + size - 8) = size;
 
-    /* on retourne l'adresse de début du bloc utilisable ie l'adresse ptr + 16 octets */
+    /* we return the start address of the usable block ie the address ptr + 16 bytes */
     return (void *)(ptr + 16);
 }
 
 Alloc
 mark_check_and_get_alloc(void *ptr)
 {
-    /* on récupère l'adresse du début du bloc alloué */
+    /* we get the address of the beginning of the allocated block */
     void *start_ptr = ptr - 16;
 
-    /* on récupère la taille totale du bloc alloué */
+    /* we get the total size of the allocated block */
     unsigned long size = *(unsigned long *)start_ptr;
 
-    /* on récupère la valeur magique */
+    /* we get the magic value */
     unsigned long magic = *(unsigned long *)(start_ptr + 8);
 
-    /* on récupère le type d'allocation mémoire */
+    /* get the type of memory allocation */
     int k =  (MemKind) (*(unsigned long *)(start_ptr + 8) & 0b11UL);
 
-    /* On vérifie que magic est cohérent */
+    /* We check that magic is coherent */
     unsigned long magic_theoric = (knuth_mmix_one_round((unsigned long) start_ptr) & ~0b11UL) | (unsigned long) k;
     assert(magic == magic_theoric);
 
-    /* On vérifie que la taille est identique au début et à la fin du bloc */
+    /* We can check that the size is identical at the beginning and at the end of the block */
     //unsigned long end_size = *(unsigned long *)(start_ptr + size - 8);
     //assert(size == end_size);
 
-    /* on remplit les champs de l'alloc qu'on renvoie */
+    /* we fill in the fields of the allowance we send back */
     Alloc a = {start_ptr, k, size};
 
     return a;

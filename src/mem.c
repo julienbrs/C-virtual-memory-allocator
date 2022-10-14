@@ -11,25 +11,21 @@
 #include "mem.h"
 #include "mem_internals.h"
 
-/** squelette du TP allocateur memoire */
 
 MemArena arena = {};
 
-
-/* ecrire votre code ici */
 
 
 void *
 emalloc(unsigned long size)
 {
-    /*  ecrire votre code ici */
     if (size == 0)
 	return NULL;
 	    
     if (size >= LARGEALLOC)
 	return emalloc_large(size);
     else if (size <= SMALLALLOC)
-	return emalloc_small(size); // allocation de taille CHUNKSIZE
+	return emalloc_small(size); // size allocation CHUNKSIZE
     else
 	return emalloc_medium(size);
 }
@@ -37,8 +33,6 @@ emalloc(unsigned long size)
 void 
 efree(void *ptr)
 {
-    /* ecrire votre code ici */
-
     Alloc a = mark_check_and_get_alloc(ptr);
     switch( a.kind ) {
     case SMALL_KIND:

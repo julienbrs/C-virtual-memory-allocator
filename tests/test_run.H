@@ -30,7 +30,7 @@ public:
     void doLiberer();
 };
 
-/*  remplissage de la liste */
+/* filling the list */
 
 template < int n >
 void fillList_fibo (vector<allocat> &li)

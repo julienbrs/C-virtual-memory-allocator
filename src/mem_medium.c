@@ -26,29 +26,29 @@ void *recursive_buddy(int index, unsigned long size) {
         mem_realloc_medium();
         return recursive_buddy(index - 1, size);
     }
-    else if (arena.TZL[index] != NULL && size == 1<<index) { // cas d'arrêt on a trouvé ce qu'on cherchait
+    else if (arena.TZL[index] != NULL && size == 1<<index) { // stop case we found what we were looking for
         unsigned long next_elt = *(unsigned long *)arena.TZL[index];
         void *ptr = mark_memarea_and_get_user_ptr(arena.TZL[index], 1<<index, MEDIUM_KIND);
         arena.TZL[index] = (void *)next_elt;
         return ptr;
     }
-    else if (arena.TZL[index] == NULL) { // on va chercher plus loin
+    else if (arena.TZL[index] == NULL) { // we'll look further
         return recursive_buddy(index + 1, size);
     }
-    else { //TZL[index] n'est pas NULL : on divise le bloc et on récurre
-        /* on conserve le bloc dispo suivant dans la liste */
+    else {  /*TZL[index] is not NULL : we divide the block and recurse
+            we keep the next available block in the list */
         unsigned long next_elt = *(unsigned long *)arena.TZL[index];
-        /* on calcule le buddy du bloc qu'on va scinder */
+        /* we calculate the buddy of the block we are going to split */
         unsigned long buddy = (unsigned long)arena.TZL[index] ^ 1 << (index - 1);
-        /* comme on a rencontré aucun bloc plus petit on sait que le suivant de buddy est NULL */
+        /* as we haven't met any smaller block we know that the next one of buddy is NULL */
         *(unsigned long *)buddy = 0;
-        /* le bloc coupé en deux pointe sur son buddy */
+        /* the block cut in two points to its buddy */
         *(unsigned long *)arena.TZL[index] = buddy;
-        /* puis on l'insère dans la liste correspondant à sa nouvelle taille */
+        /* then we insert it in the list corresponding to its new size */
         arena.TZL[index - 1] = arena.TZL[index];
-        /* on met le bloc dispo suivant du début en tête de liste */
+        /* we put the next available block at the top of the list */
         arena.TZL[index] = (void *)next_elt;
-        /* on récurre ! */
+        /* We go on ! */
         return recursive_buddy(index - 1, size);
     }
 }
@@ -73,11 +73,11 @@ void efree_medium(Alloc a) {
     void * temp;
     while (ptr_list_elt != NULL) {
         if ((void*)*(unsigned long *)ptr_list_elt == ptr_buddy) {
-            //suppression de buddy
+            /* delete of buddy */
             *(unsigned long *)ptr_list_elt = *(unsigned long *)ptr_buddy;
-            //calcul de l'adresse a fusionner
+            /* calculation of the address to merge */
             temp = ((unsigned long) a.ptr < (unsigned long) ptr_buddy) ?  a.ptr : ptr_buddy;
-            //on fusionne
+            /* We merge */
             *(unsigned long *)temp = (unsigned long) arena.TZL[index_tzl + 1];
             arena.TZL[index_tzl + 1] = temp;
             return;

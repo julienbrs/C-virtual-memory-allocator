@@ -22,19 +22,19 @@
 */
 
 /*
- * Nombre max de blocs alloues en meme temps
+ * Maximum number of blocks allocated at the same time
  */
 #define NB_MAX_ALLOC 5000
  
 /*
- * Nombre de commandes differentes pour l'interpreteur
- * (sans inclure les commandes erronees (ERROR))
+ * Number of different commands for the interpreter
+ * (not including erroneous commands (ERROR))
  */
 #define NB_CMD 8
  
 /*
- * Nombre de caracteres maximal pour une ligne de commande
- * (terminateur inclus A VERIFIER)
+ * Maximum number of characters for a command line
+ * (including terminator - please check)
  */
 #define MAX_CMD_SIZE 64
 
@@ -49,19 +49,19 @@
 */
 
 /*
- * Identification de la commande tapee
- * On rajoute ERROR pour les commandes erronees
+ * Identification of the command typed
+ * ERROR is added for erroneous commands
  */
 typedef enum {INIT=0, SHOW, USED, ALLOC, FREE, DESTROY, HELP, EXIT, ERROR} COMMAND;
 
 /*
- * type des identificateurs de blocs
+ * type of block identifiers
  */
 typedef unsigned long ID;
  
   
 /*
- * Identification des parametres tapes
+ * Identification of the typed parameters
  */
 typedef struct {
 	ID id;
@@ -70,40 +70,40 @@ typedef struct {
  
  
 /*
- * Structure de donnees contenant les informations sur un bloc alloue
+ * Data structure containing information about an allocated block
  */
 typedef struct {
-	/* identificateur du bloc alloue, vaut 0 si pas de bloc alloue*/
+	/* identifier of the allocated block, is 0 if no block is allocated*/
 	ID id;
-	/* adresse du bloc alloue, vaut NULL si pas de bloc alloue*/
+	/* address of the allocated block, is NULL if no block is allocated*/
 	void *address;
-	/* taille du bloc */
+	/* block size */
 	size_t size; 
 } BLOCINFO;
 
 /*
   ===============================================================================
-  Variables globales
+  Global variables
   ===============================================================================
 */
 
 
 /*
- * Compteur pour determiner les Ids des blocs alloues.
- * Doit etre (re)initialise a 1
+ * Counter to determine the Ids of the allocated blocks.
+ * Must be (re)initialized to 1
  */
 unsigned long id_count;
 
 /*
- * Liste des commandes reconnues
+ * List of recognized commands
  */
 static char* commands[NB_CMD] = {"init", "show", "used","alloc", "free", "destroy", "help", "exit"};
 	
 	
 /*
- * Tableau stockant les infos sur les blocs alloues
- * Les recherches dans cette table se font sur le champ id
- * des structures BLOCINFO
+ * Table storing information about the allocated blocks
+ * Searches in this table are done on the id field
+ * BLOCINFO structures
  */
 BLOCINFO bloc_info_table[NB_MAX_ALLOC];
 
@@ -111,13 +111,13 @@ static void *zone_memoire;
 
 /*
   ===============================================================================
-  Fonctions
+  Functions
   ===============================================================================
 */
 
 
 /*
- * Fonction d'affichage de la mémoire occupée
+ * Display function of the occupied memory
  */
 void used()
 {
@@ -136,7 +136,7 @@ void used()
 
 
 /*
- * Affichage de l'aide
+ * Display of the help
  */
 void help()
 {
@@ -160,7 +160,7 @@ void help()
 
  
 /*
- * Initialisation de l'interpreteur
+ * Initialization of the interpreter
  */
 void init()
 {
@@ -172,7 +172,7 @@ void init()
 	
 	id_count = 1;
 	
-	/* initialisation de la table des infos : */
+	/* initialization of the info table : */
 	for (i=0; i < NB_MAX_ALLOC; i++) {
 		(bloc_info_table[i]).id = 0;
 	}
@@ -181,9 +181,9 @@ void init()
 }
 
 /*
- * Determine la commande tapee
- * token : chaine correspondant a la commande uniquement
- * cmd : emplacement ou disposer la commande eventuellement identifiee
+ * Determine the command typed
+ * token : string corresponding to the command only
+ * cmd : location where to put the command eventually identified
  */
 void get_command(char *token, COMMAND *cmd)
 {
@@ -193,16 +193,16 @@ void get_command(char *token, COMMAND *cmd)
 	for(i=INIT; i<NB_CMD; i++) {
 		if (!strcmp(token, commands[i])) break;
 	}
-	if (i < NB_CMD) /* si la commande a ete trouvee */
+	if (i < NB_CMD) /* if the command has been found */
 		*cmd = i;
-	else *cmd=ERROR; /* sinon on signale l'erreur*/
+	else *cmd=ERROR; /* otherwise we report the error*/
 }
 
 
 /*
- * Determine les arguments de la ligne de commande
- * args : arguments tapes
- * pcmd : emplacement ou disposer les arguments identifies
+ * Determine the arguments of the command line
+ * args : typed arguments
+ * pcmd : location where to put the arguments
  */
 ARG get_args(char *args, COMMAND *pcmd)
 {
@@ -211,49 +211,49 @@ ARG get_args(char *args, COMMAND *pcmd)
 	long size, id;
 	char *endptr= (char*)1;
 		
-	/* en fonction de la commande desiree */
+	/* according to the desired command */
 	switch(*pcmd) {
 		
 	case ALLOC:
 		if (args == NULL) {
-			/* erreur si aucun argument */
+			/* error if no argument */
 			*pcmd = ERROR;
 			break;
 		}
-		/* recuperation du parametre <taille> */
+		/* recovering the <size> parameter */
 		size_string = strtok(args, "\n");
 		
 		size = strtol(size_string, &endptr, 0);
-		/* NB : dernier parametre a 0 pour gerer decimal et hexa*/
+		/* NB : last parameter at 0 to manage decimal and hexa*/
 
 		if ((*endptr != '\0') || (size == 0) || (size < 0)) {
-			/* erreur si l'argument n'est pas entier 
-			   ou s'il est nul, ou s'il est negatif */
+			/* error if the argument is not integer 
+			   or if it is null, or if it is negative */
 			*pcmd = ERROR;
 			break;
 		}
-		/* sinon l'argument est correct */
-		/* on remplit la structure avec la valeur obtenue*/
+		/* otherwise the argument is correct */
+		/* fill the structure with the value obtained*/
 		our_args.size = (size_t)size;				
 		break;
 				
 	case FREE:
 		id_string = strtok(args, "\n");
 		if (id_string == NULL) {
-			/* erreur si aucun argument */
+			/* error if no argument */
 			*pcmd = ERROR;
 			break;
 		}
 		id = strtol(id_string, &endptr, 10);
 
 		if ((*endptr != '\0') || (id == 0) || (id < 0)) {
-			/* erreur si l'argument n'est pas entier
-			   ou s'il est nul ou negatif */
+			/* error if the argument is not integer
+			   or if it is null or negative */
 			*pcmd = ERROR;
 			break;
 		}
-		/* sinon l'argument est correct */
-		/* on remplit la structure avec la valeur obtenue*/
+		/* otherwise the argument is correct */
+		/* fill the structure with the value obtained*/
 		our_args.id = (ID)id;						
 		break;
 				
@@ -264,9 +264,9 @@ ARG get_args(char *args, COMMAND *pcmd)
 
  
 /*
- * Analyse une ligne tapee
- * args : emplacement ou stocker la structure des arguments
- * retour : la commande tapee
+ * parses a typed line
+ * args : location where to store the arguments structure
+ * return : the typed command
  */
 COMMAND read_command(ARG *args)
 {
@@ -276,13 +276,13 @@ COMMAND read_command(ARG *args)
 	COMMAND our_cmd;
 		
  
- 	/* NB : il n'y a pas d'affichage du prompt */
-	scanf("%[^\n]", cmd); /* lecture de la ligne de commande */
-        getc(stdin); /* recuperation du \n */
-	token = strtok(cmd," "); /* recuperation de la commande */
-	get_command(token, &our_cmd); /* determination de la commande */
+ 	/* NB : there is no display of the prompt */
+	scanf("%[^\n]", cmd); /* reading the command line */
+        getc(stdin); /* recovery of \n */
+	token = strtok(cmd," "); /* recovery of the order */
+	get_command(token, &our_cmd); /* determination of the order */
 		
-	/* si la commande a ete correctement identifiee, on obtient les arguments :*/
+	/* if the command has been correctly identified, we get the arguments :*/
 	if (our_cmd != ERROR) {
 		token = strtok(NULL, "\n");
 		*args = get_args(token, &our_cmd);
@@ -293,11 +293,11 @@ COMMAND read_command(ARG *args)
 
 
 /*
- * Obtient un identificateur a partir d'une adresse et d'une taille de bloc
- * et range les infos sur le bloc dans la table
- * addr : adresse du bloc
- * size : taille du bloc 
- * retour : un numero d'id ou 0 si plus d'id libre
+ * obtains an identifier from an address and a block size
+ * and stores the block information in the table
+ * addr : address of the block
+ * size : size of the block 
+ * return : an id number or 0 if no id available
  */
 ID get_id(void *addr, size_t size)
 {
@@ -308,7 +308,7 @@ ID get_id(void *addr, size_t size)
 		index++;
 	}
 		
-	if (index == NB_MAX_ALLOC) { /* la limite d'allocation est atteinte */			
+	if (index == NB_MAX_ALLOC) { /* the allocation limit has been reached */		
 		return 0;
 	}
 	else {
@@ -317,30 +317,30 @@ ID get_id(void *addr, size_t size)
 		bloc_info_table[index].address = addr;
 		bloc_info_table[index].size = size;
 			
-		return id_count++; /* NB: on postincremente id_count */
+		return id_count++; /* NB: increment id_count */
 	}	
 }
 
 
 /*
- * Obtient la taille et l'adresse d'un bloc a partir d'un id
- * addr : emplacement ou stocker l'adresse du bloc
- * size : emplacement ou stocker la taille du bloc 
- * retour : 0 si ok, -1 si id incorrect
+ * Get the size and address of a block from an id
+ * addr : location to store the block address
+ * size : location to store the size of the block 
+ * return : 0 if ok, -1 if wrong id
  */
 int get_info_from_id(ID id, void** addr, size_t* size)
 {
  
 	unsigned long index = 0;
  
-	/* si id invalide, echec */
+	/* if invalid id, failure */
 	if (id < 1) return -1;
 		
 	while ((bloc_info_table[index].id != id) && (index < NB_MAX_ALLOC)) {
 		index++;
 	}
 					
-	/* si id non repertorie, echec */
+	/* if id non repertorie, failure */
 	if (index == NB_MAX_ALLOC) return -1;
 				 	
 	*addr = bloc_info_table[index].address;
@@ -352,9 +352,9 @@ int get_info_from_id(ID id, void** addr, size_t* size)
 
  
 /*
- * Libere l'entree associee a un id dans la table d'infos
- * On suppose que l'id existe dans la table
- * id : l'id a liberer
+ * Free the entry associated with an id in the info table
+ * We assume that the id exists in the table
+ * id : the id to free
  */
 void remove_id(ID id)
 {
@@ -378,7 +378,7 @@ int main() {
 	size_t size;	
 
   
-	init(); /* initialisation de l'interpreteur */
+	init(); /* initialization of the interpreter */
     	
 	while(1) {
 #ifdef DEBUG
@@ -406,17 +406,17 @@ int main() {
 		case ALLOC:
 
 			res = emalloc(args.size);
-			/* si une erreur a lieu, on affiche 0 */
+			/* if an error occurs, 0 is displayed */
 			if (res == NULL) {
 				printf("Erreur : échec de l'allocation (fonction emalloc, retour=NULL)\n");
 			} else {
 				id = get_id(res, args.size);
 				if (id == 0) {
-					/* s'il ne reste pas d'id libre
-					   on affiche 0 et on libere le bloc */
+					/* if there is no free id left
+					   we display 0 and release the block */
 					printf("Erreur : nombre maximum d'allocations atteint/n");
 					efree(res);
-				} else { /* pas de probleme, affichage de la zone allouée */
+				} else { /* no problem, display of the allocated area */
 					printf("%ld 0x%lX\n", id, (unsigned long)(res - (void*)zone_memoire));
 				}
 			}
@@ -430,7 +430,7 @@ int main() {
 		case FREE:
 						
 			if (get_info_from_id(args.id, &addr, &size) == -1)
-				/* erreur dans la valeur de l'id */
+				/* error in the id value */
 				printf("Erreur : identificateur de bloc incorrect\n"); 
 			else {
 							
@@ -438,10 +438,10 @@ int main() {
 				/* liberation du bloc concerne */
 				efree(addr);
 									
-				/* liberation de l'id */
+				/* release of the id */
 				remove_id(args.id);
 								
-				/* NB : dans le cas normal, on n'affiche rien */
+				/* NB: in the normal case, nothing is displayed */
 			}
 			break;
 				

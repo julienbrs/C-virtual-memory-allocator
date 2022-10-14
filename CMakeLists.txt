@@ -21,13 +21,13 @@ if (VARIANTE_LOGINS MATCHES "login[123]")
 endif()
 
 #######
-# Compilation standard avec googletest
+# Standard compilation with googletest
 #######
 
 ###
-# sur Debian et al, les googletests sont à recompiler
-# sur centOS6, c'est une bibliothèque avec son équivalent de pkg-config
-# sinon, on utilise l'autodetection de Cmake
+# on Debian et al, the googletests are to be compiled on centOS6, 
+# it is a library with its equivalent of pkg-config otherwise,
+# we use the autodetection of Cmake
 ###
 if(EXISTS /usr/src/gtest)
     add_subdirectory(/usr/src/gtest ./gtest)
@@ -46,7 +46,7 @@ else(EXISTS /usr/src/gtest)
 endif(EXISTS /usr/src/gtest)
 
 ##
-# Recherche du répertoire avec les headers python
+# Directory search with python headers
 ##
 execute_process(COMMAND pkg-config --cflags python3 OUTPUT_VARIABLE python_header OUTPUT_STRIP_TRAILING_WHITESPACE)
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} ${python_header}")
@@ -57,39 +57,39 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} ${python_header}")
 #endif (Python_Development_FOUND)
 
 ##
-# Si vous utilisé plusieurs fichiers, en plus de mem.c et les autres,
-# pour votre allocateur il faut les ajouter ici
+# If you use several files, in addition to mem.c and others,
+# for your allocator you must add them here
 ##
 add_library(emalloc SHARED src/mem.c src/mem_internals.c src/mem_small.c src/mem_medium.c src/mem_large.c)
 
 ##
-# Bibliothèque pour faire des tests en python
+# Library to make tests in python
 ##
 
 add_library(mempy SHARED tests/mempymodule.c)
 target_link_libraries(mempy emalloc)
 
 ##
-# Construction du programme de tests unitaires
+# Construction of the unit test program
 ##
 add_executable(alloctest tests/alloctest.cc tests/test_mark.cc tests/test_generic.cc tests/test_buddy.cc tests/test_run_cpp.cc)
 target_link_libraries(alloctest gtest gtest_main emalloc)
 add_test(AllTestsAllocator alloctest)
 
 ##
-# Ajout d'une cible pour lancer les tests de manière verbeuse
+# Added a target to launch the tests in a verbose way
 ##
 add_custom_target(check alloctest)
 
 ##
-# Construction du shell
+# Shell construction
 ##
 add_executable(memshell src/memshell.c)
 target_link_libraries(memshell emalloc)
 
 ##
-# Construction de l'archive
-# inclu le .git si il est là
+# Building the archive  
+# include the .git if it is there
 ##
 string(REPLACE ";" "_" LOGINS_SANS_POINTVIRGULE "${VARIANTE_LOGINS}")
 set(CPACK_PACKAGE_VERSION_MAJOR "2")

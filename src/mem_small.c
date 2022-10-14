@@ -13,12 +13,12 @@ unsigned long CHUNKPOOL_SIZE;
 void *
 emalloc_small(unsigned long size)
 {
-    /* si la liste de petites allocs est vide, ou qu'il n'y a plus de place, on realloc un bloc dedié */
+    /* if the list of small allowances is empty, or there is no more space, we reallocate a dedicated block */
     if (arena.chunkpool == NULL || CHUNKPOOL_SIZE <= 96) {
         arena.chunkpool = NULL;
         CHUNKPOOL_SIZE = mem_realloc_small();
 
-        /* on "chaîne" les blocs en écrivant l'adresse du suivant tous les CHUNKSIZE octets */
+        /* we "chain" the blocks by writing the address of the next one every CHUNKSIZE bytes */
         int nb_chunks = CHUNKPOOL_SIZE / CHUNKSIZE;
         unsigned long *current_ptr = arena.chunkpool;
         for (int i = 0; i < nb_chunks; i++) {
@@ -26,36 +26,31 @@ emalloc_small(unsigned long size)
             current_ptr = (unsigned long *)(*current_ptr);
         }
     }
-    /* on prend l'adresse de l'espace qu'on va allouer à l'utilisateur */
+    /* we take the address of the space we will allocate to the user */
     void *chunkpool_head = arena.chunkpool;
-    //printf("adresse allouée : %p\n",chunkpool_head);
 
-    /* on indique que ce bloc de taille CHUNKSIZE n'est plus libre */
+    /* indicates that this block of size CHUNKSIZE is no longer free */
     unsigned long new_head = *(unsigned long *)arena.chunkpool;
-    //printf("prochaine adresse libre : %lu\n", new_head);
     arena.chunkpool = (void *) new_head;
-    //printf("prochaine adresse libre : %p\n", arena.chunkpool);
 
-    /* on met à jour la taille restante pour petites allocs */
+    /* we update the remaining size for small allowances */
     CHUNKPOOL_SIZE -= CHUNKSIZE;
-    //printf("chunkpool_size : %lu\n",CHUNKPOOL_SIZE);
 
-    /* on marque l'espace mémoire alloué */
+    /* we mark the allocated memory space */
     void *ptr_alloc = mark_memarea_and_get_user_ptr(chunkpool_head, CHUNKSIZE, SMALL_KIND);
     return ptr_alloc;
 }
 
 void efree_small(Alloc a) {
     
-    /* à l'intérieur de la zone à libérer, on écrit l'adresse du prochain bloc libre */
-    /* qui est la tête actuelle du chunkpool */
+    /* inside the zone to be freed, we write the address of the next free block
+    which is the current head of the chunkpool */
     unsigned long *addr_to_free = a.ptr;
     *addr_to_free = (unsigned long) arena.chunkpool;
 
-    /* la tête du chunkpool devient la zone liberée */
+    /* the head of the chunkpool becomes the free zone */
     arena.chunkpool = a.ptr;
-    //printf("chunkpool head : %p\n", arena.chunkpool);
 
-    /* on met à jour la place disponible après libération */
+    /* we update the available space after release */
     CHUNKPOOL_SIZE += CHUNKSIZE;
 }
