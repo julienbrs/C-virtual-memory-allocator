@@ -1,7 +1,0 @@
-{
-    "files.associations": {
-        "mem_internals.h": "c",
-        "mem.h": "c"
-    },
-    "cmake.configureOnOpen": true
-}
