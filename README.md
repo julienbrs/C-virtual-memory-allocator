@@ -91,7 +91,7 @@ Test sets and skeleton provided (Google Test)
 <!-- CONTACT -->
 ## Contact
 
-Bourseau Julien - *1st year student at Ensimag* - julien.bourseau@gmail.com
+Bourseau Julien - *2nd year student at Ensimag, 2022/2023* - julien.bourseau@gmail.com
 
 Project Link: [https://github.com/julienbrs/Find-closest-pair-of-points](https://github.com/julienbrs/Find-closest-pair-of-points)
 
